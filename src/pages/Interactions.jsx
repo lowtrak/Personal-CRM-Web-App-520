@@ -64,6 +64,36 @@ export default function Interactions({ sidebarOpen, onToggleSidebar }) {
     }
   }
 
+  // Helper function to determine if follow-up date is overdue or due today
+  const isFollowUpOverdue = (followUpDate) => {
+    if (!followUpDate) return false
+    
+    console.log('Checking follow-up date:', followUpDate)
+    
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date()
+    const todayString = today.getFullYear() + '-' + 
+      String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(today.getDate()).padStart(2, '0')
+    
+    console.log('Today string:', todayString)
+    
+    // Extract date part from followUpDate (should be in YYYY-MM-DD format or ISO string)
+    let followUpDateString = followUpDate.toString()
+    if (followUpDateString.includes('T')) {
+      // If it's an ISO string, extract just the date part
+      followUpDateString = followUpDateString.split('T')[0]
+    }
+    
+    console.log('Follow-up date string:', followUpDateString)
+    
+    // Compare date strings directly to avoid timezone issues
+    const isOverdue = followUpDateString <= todayString
+    console.log('Is overdue:', isOverdue)
+    
+    return isOverdue
+  }
+
   if (loading) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -144,7 +174,8 @@ export default function Interactions({ sidebarOpen, onToggleSidebar }) {
         {filteredAndSortedInteractions.map((interaction, index) => {
           const contact = contacts.find(c => c.id === interaction.contactId)
           const colorClass = interactionTypeColors[interaction.type] || 'gray'
-
+          const isOverdue = isFollowUpOverdue(interaction.followUpDate)
+          
           return (
             <motion.div
               key={interaction.id}
@@ -177,9 +208,16 @@ export default function Interactions({ sidebarOpen, onToggleSidebar }) {
                       </p>
                     )}
                     {interaction.followUpDate && (
-                      <div className="mt-3 flex items-center text-sm text-orange-600">
+                      <div className={`mt-3 flex items-center text-sm ${
+                        isOverdue ? 'text-red-600' : 'text-blue-600'
+                      }`}>
                         <SafeIcon icon={FiCalendar} className="w-4 h-4 mr-1" />
                         Follow-up: {formatDisplayDate(interaction.followUpDate)}
+                        {isOverdue && (
+                          <span className="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                            Due
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -209,7 +247,10 @@ export default function Interactions({ sidebarOpen, onToggleSidebar }) {
           <SafeIcon icon={FiMessageSquare} className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No interactions found</h3>
           <p className="text-gray-600 mb-4">
-            {searchQuery || filterType ? "Try adjusting your search or filters" : "Start logging your interactions to track your relationships"}
+            {searchQuery || filterType 
+              ? "Try adjusting your search or filters" 
+              : "Start logging your interactions to track your relationships"
+            }
           </p>
           {!searchQuery && !filterType && (
             <button
