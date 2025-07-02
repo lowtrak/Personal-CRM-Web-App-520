@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import SafeIcon from '../common/SafeIcon'
 import * as FiIcons from 'react-icons/fi'
 
-const { FiHome, FiUsers, FiMessageSquare, FiBarChart3, FiSettings, FiMenu, FiX, FiLogOut } = FiIcons
+const { FiHome, FiUsers, FiMessageSquare, FiBarChart3, FiSettings, FiX, FiLogOut } = FiIcons
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: FiHome },
@@ -21,21 +21,18 @@ export default function Sidebar({ isOpen, onToggle }) {
 
   const handleSignOut = async () => {
     await signOut()
-    onToggle() // Close sidebar on mobile after sign out
+    // Don't auto-close sidebar on sign out anymore since it's persistent
+  }
+
+  const handleLinkClick = () => {
+    // Only close sidebar on mobile when clicking links
+    if (window.innerWidth < 1024) {
+      onToggle()
+    }
   }
 
   return (
     <>
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <button
-          onClick={onToggle}
-          className="p-2 rounded-lg bg-white shadow-lg border border-gray-200"
-        >
-          <SafeIcon icon={isOpen ? FiX : FiMenu} className="w-5 h-5" />
-        </button>
-      </div>
-
       {/* Mobile overlay */}
       {isOpen && (
         <div
@@ -61,9 +58,20 @@ export default function Sidebar({ isOpen, onToggle }) {
           flex flex-col shadow-xl lg:shadow-none
         `}
       >
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Solo CRM</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage your relationships</p>
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Solo CRM</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage your relationships</p>
+          </div>
+          
+          {/* Close button in header */}
+          <button
+            onClick={onToggle}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Close sidebar"
+          >
+            <SafeIcon icon={FiX} className="w-5 h-5 text-gray-500" />
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
@@ -73,7 +81,7 @@ export default function Sidebar({ isOpen, onToggle }) {
               <Link
                 key={item.name}
                 to={item.href}
-                onClick={() => onToggle()}
+                onClick={handleLinkClick}
                 className={`
                   flex items-center px-3 py-2 rounded-lg text-sm font-medium
                   transition-all duration-200

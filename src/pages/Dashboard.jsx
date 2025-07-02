@@ -2,11 +2,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useCRM } from '../context/CRMContext';
 import SafeIcon from '../common/SafeIcon';
+import HamburgerButton from '../components/HamburgerButton';
+import { formatDisplayDate } from '../utils/dateUtils';
 import * as FiIcons from 'react-icons/fi';
 
 const { FiUsers, FiMessageSquare, FiTrendingUp, FiCalendar, FiPlus } = FiIcons;
 
-export default function Dashboard() {
+export default function Dashboard({ sidebarOpen, onToggleSidebar }) {
   const { state, dispatch } = useCRM();
   const { contacts, interactions } = state;
 
@@ -14,20 +16,8 @@ export default function Dashboard() {
   const recentInteractions = interactions.slice(-5).reverse();
 
   const stats = [
-    {
-      name: 'Total Contacts',
-      value: contacts.length,
-      icon: FiUsers,
-      color: 'blue',
-      change: '+12%'
-    },
-    {
-      name: 'Interactions',
-      value: interactions.length,
-      icon: FiMessageSquare,
-      color: 'green',
-      change: '+8%'
-    },
+    { name: 'Total Contacts', value: contacts.length, icon: FiUsers, color: 'blue', change: '+12%' },
+    { name: 'Interactions', value: interactions.length, icon: FiMessageSquare, color: 'green', change: '+8%' },
     {
       name: 'This Month',
       value: interactions.filter(i => {
@@ -55,9 +45,14 @@ export default function Dashboard() {
       exit={{ opacity: 0, y: -20 }}
       className="p-6 max-w-7xl mx-auto"
     >
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome back! Here's what's happening with your network.</p>
+      <div className="mb-8 flex items-center">
+        {!sidebarOpen && (
+          <HamburgerButton onToggle={onToggleSidebar} />
+        )}
+        <div className={sidebarOpen ? "" : "ml-4"}>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-2">Welcome back! Here's what's happening with your network.</p>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -165,7 +160,7 @@ export default function Dashboard() {
                     </p>
                     <p className="text-sm text-gray-500 mt-1">{interaction.notes}</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      {new Date(interaction.date).toLocaleDateString()}
+                      {formatDisplayDate(interaction.date)}
                     </p>
                   </div>
                 </div>

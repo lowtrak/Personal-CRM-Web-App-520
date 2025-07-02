@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCRM } from '../context/CRMContext'
 import SafeIcon from '../common/SafeIcon'
+import { formatDateForInput } from '../utils/dateUtils'
 import * as FiIcons from 'react-icons/fi'
 
 const { FiX, FiUser, FiMail, FiPhone, FiBuilding, FiTag, FiCalendar } = FiIcons
@@ -9,6 +10,7 @@ const { FiX, FiUser, FiMail, FiPhone, FiBuilding, FiTag, FiCalendar } = FiIcons
 export default function ContactModal() {
   const { state, dispatch, addContact, updateContact } = useCRM()
   const { isContactModalOpen, selectedContact } = state
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -24,6 +26,13 @@ export default function ContactModal() {
 
   useEffect(() => {
     if (selectedContact) {
+      console.log('Loading selected contact:', selectedContact)
+      
+      // Use formatDateForInput for follow-up date
+      const followUpDate = selectedContact.followUpDate ? formatDateForInput(selectedContact.followUpDate) : ''
+      
+      console.log('Formatted contact follow-up date:', followUpDate)
+      
       setFormData({
         firstName: selectedContact.firstName || '',
         lastName: selectedContact.lastName || '',
@@ -33,7 +42,7 @@ export default function ContactModal() {
         position: selectedContact.position || '',
         notes: selectedContact.notes || '',
         tags: selectedContact.tags ? selectedContact.tags.join(', ') : '',
-        followUpDate: selectedContact.followUpDate || ''
+        followUpDate: followUpDate
       })
     } else {
       setFormData({
@@ -56,8 +65,11 @@ export default function ContactModal() {
 
     const contactData = {
       ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      followUpDate: formData.followUpDate || null // Keep as YYYY-MM-DD format or null
     }
+
+    console.log('Submitting contact data:', contactData)
 
     try {
       if (selectedContact) {
@@ -115,6 +127,7 @@ export default function ContactModal() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <SafeIcon icon={FiUser} className="w-4 h-4 inline mr-1" />
@@ -143,6 +156,7 @@ export default function ContactModal() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <SafeIcon icon={FiPhone} className="w-4 h-4 inline mr-1" />
@@ -170,6 +184,7 @@ export default function ContactModal() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Position
@@ -205,7 +220,10 @@ export default function ContactModal() {
               <input
                 type="date"
                 value={formData.followUpDate}
-                onChange={(e) => setFormData({ ...formData, followUpDate: e.target.value })}
+                onChange={(e) => {
+                  console.log('Contact follow-up date changed:', e.target.value)
+                  setFormData({ ...formData, followUpDate: e.target.value })
+                }}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>

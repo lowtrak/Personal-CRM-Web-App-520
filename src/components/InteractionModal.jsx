@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCRM } from '../context/CRMContext'
 import SafeIcon from '../common/SafeIcon'
+import { formatDateForInput } from '../utils/dateUtils'
 import * as FiIcons from 'react-icons/fi'
 
 const { FiX, FiUser, FiCalendar, FiMessageSquare } = FiIcons
@@ -11,6 +12,7 @@ const interactionTypes = ['Email', 'Phone', 'Meeting', 'Event', 'Follow-up', 'Ot
 export default function InteractionModal() {
   const { state, dispatch, addInteraction, updateInteraction } = useCRM()
   const { isInteractionModalOpen, selectedInteraction, contacts } = state
+  
   const [formData, setFormData] = useState({
     contactId: '',
     type: 'Email',
@@ -19,15 +21,25 @@ export default function InteractionModal() {
     followUpDate: ''
   })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (selectedInteraction) {
+      console.log('Loading selected interaction:', selectedInteraction)
+      
+      // Use formatDateForInput for both date fields
+      const interactionDate = selectedInteraction.date ? formatDateForInput(selectedInteraction.date) : new Date().toISOString().split('T')[0]
+      const followUpDate = selectedInteraction.followUpDate ? formatDateForInput(selectedInteraction.followUpDate) : ''
+      
+      console.log('Formatted interaction date:', interactionDate)
+      console.log('Formatted follow-up date:', followUpDate)
+      
       setFormData({
         contactId: selectedInteraction.contactId || '',
         type: selectedInteraction.type || 'Email',
-        date: selectedInteraction.date ? selectedInteraction.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        date: interactionDate,
         notes: selectedInteraction.notes || '',
-        followUpDate: selectedInteraction.followUpDate || ''
+        followUpDate: followUpDate
       })
     } else {
       setFormData({
@@ -38,26 +50,54 @@ export default function InteractionModal() {
         followUpDate: ''
       })
     }
+    setError('')
   }, [selectedInteraction, isInteractionModalOpen])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
-    const interactionData = {
-      ...formData,
-      date: new Date(formData.date).toISOString()
+    // Validation
+    if (!formData.contactId) {
+      setError('Please select a contact')
+      setLoading(false)
+      return
     }
+
+    if (!formData.notes.trim()) {
+      setError('Please add some notes about this interaction')
+      setLoading(false)
+      return
+    }
+
+    // Use the form data directly - dates are already in YYYY-MM-DD format
+    const interactionData = {
+      contactId: formData.contactId,
+      type: formData.type,
+      date: formData.date, // Keep as YYYY-MM-DD format
+      notes: formData.notes,
+      followUpDate: formData.followUpDate || null // Keep as YYYY-MM-DD format or null
+    }
+
+    console.log('Submitting interaction data:', interactionData)
 
     try {
       if (selectedInteraction) {
-        await updateInteraction({ ...selectedInteraction, ...interactionData })
+        console.log('Updating existing interaction')
+        await updateInteraction({ 
+          ...selectedInteraction, 
+          ...interactionData 
+        })
       } else {
+        console.log('Adding new interaction')
         await addInteraction(interactionData)
       }
+      
       dispatch({ type: 'CLOSE_INTERACTION_MODAL' })
     } catch (error) {
       console.error('Error saving interaction:', error)
+      setError('Failed to save interaction. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -65,6 +105,7 @@ export default function InteractionModal() {
 
   const handleClose = () => {
     dispatch({ type: 'CLOSE_INTERACTION_MODAL' })
+    setError('')
   }
 
   if (!isInteractionModalOpen) return null
@@ -129,6 +170,7 @@ export default function InteractionModal() {
                   ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <SafeIcon icon={FiCalendar} className="w-4 h-4 inline mr-1" />
@@ -138,7 +180,10 @@ export default function InteractionModal() {
                   type="date"
                   required
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) => {
+                    console.log('Date input changed:', e.target.value)
+                    setFormData({ ...formData, date: e.target.value })
+                  }}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -166,10 +211,19 @@ export default function InteractionModal() {
               <input
                 type="date"
                 value={formData.followUpDate}
-                onChange={(e) => setFormData({ ...formData, followUpDate: e.target.value })}
+                onChange={(e) => {
+                  console.log('Follow-up date input changed:', e.target.value)
+                  setFormData({ ...formData, followUpDate: e.target.value })
+                }}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
+            )}
 
             <div className="flex space-x-3 pt-4">
               <button

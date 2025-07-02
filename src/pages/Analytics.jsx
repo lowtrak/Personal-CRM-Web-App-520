@@ -2,12 +2,13 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useCRM } from '../context/CRMContext';
 import SafeIcon from '../common/SafeIcon';
+import HamburgerButton from '../components/HamburgerButton';
 import ReactECharts from 'echarts-for-react';
 import * as FiIcons from 'react-icons/fi';
 
 const { FiTrendingUp, FiUsers, FiMessageSquare, FiCalendar } = FiIcons;
 
-export default function Analytics() {
+export default function Analytics({ sidebarOpen, onToggleSidebar }) {
   const { state } = useCRM();
   const { contacts, interactions } = state;
 
@@ -21,9 +22,9 @@ export default function Analytics() {
     // Monthly interactions
     const monthlyData = {};
     interactions.forEach(interaction => {
-      const month = new Date(interaction.date).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short' 
+      const month = new Date(interaction.date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short'
       });
       monthlyData[month] = (monthlyData[month] || 0) + 1;
     });
@@ -64,8 +65,13 @@ export default function Analytics() {
 
   // Chart options
   const interactionTypeOptions = {
-    title: { text: 'Interaction Types', left: 'center' },
-    tooltip: { trigger: 'item' },
+    title: {
+      text: 'Interaction Types',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'item'
+    },
     series: [{
       name: 'Interactions',
       type: 'pie',
@@ -78,20 +84,27 @@ export default function Analytics() {
         itemStyle: {
           shadowBlur: 10,
           shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.5)'
+          shadowColor: 'rgba(0,0,0,0.5)'
         }
       }
     }]
   };
 
   const monthlyInteractionsOptions = {
-    title: { text: 'Monthly Interactions', left: 'center' },
-    tooltip: { trigger: 'axis' },
+    title: {
+      text: 'Monthly Interactions',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis'
+    },
     xAxis: {
       type: 'category',
       data: Object.keys(analytics.monthlyData)
     },
-    yAxis: { type: 'value' },
+    yAxis: {
+      type: 'value'
+    },
     series: [{
       data: Object.values(analytics.monthlyData),
       type: 'line',
@@ -101,9 +114,19 @@ export default function Analytics() {
   };
 
   const companiesOptions = {
-    title: { text: 'Contacts by Company', left: 'center' },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: { type: 'value' },
+    title: {
+      text: 'Contacts by Company',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    xAxis: {
+      type: 'value'
+    },
     yAxis: {
       type: 'category',
       data: Object.keys(analytics.companies).slice(0, 10)
@@ -115,18 +138,8 @@ export default function Analytics() {
   };
 
   const stats = [
-    {
-      name: 'Total Contacts',
-      value: contacts.length,
-      icon: FiUsers,
-      color: 'blue'
-    },
-    {
-      name: 'Total Interactions',
-      value: interactions.length,
-      icon: FiMessageSquare,
-      color: 'green'
-    },
+    { name: 'Total Contacts', value: contacts.length, icon: FiUsers, color: 'blue' },
+    { name: 'Total Interactions', value: interactions.length, icon: FiMessageSquare, color: 'green' },
     {
       name: 'This Month',
       value: interactions.filter(i => {
@@ -152,9 +165,14 @@ export default function Analytics() {
       exit={{ opacity: 0, y: -20 }}
       className="p-6 max-w-7xl mx-auto"
     >
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-        <p className="text-gray-600 mt-2">Insights into your networking activities</p>
+      <div className="mb-8 flex items-center">
+        {!sidebarOpen && (
+          <HamburgerButton onToggle={onToggleSidebar} />
+        )}
+        <div className={sidebarOpen ? "" : "ml-4"}>
+          <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+          <p className="text-gray-600 mt-2">Insights into your networking activities</p>
+        </div>
       </div>
 
       {/* Stats Grid */}

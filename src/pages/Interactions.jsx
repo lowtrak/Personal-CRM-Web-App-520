@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useCRM } from '../context/CRMContext'
 import SafeIcon from '../common/SafeIcon'
+import HamburgerButton from '../components/HamburgerButton'
+import { formatDisplayDate } from '../utils/dateUtils'
 import * as FiIcons from 'react-icons/fi'
 
 const { FiPlus, FiSearch, FiFilter, FiEdit2, FiTrash2, FiCalendar, FiMessageSquare, FiUsers } = FiIcons
@@ -15,7 +17,7 @@ const interactionTypeColors = {
   'Other': 'gray'
 }
 
-export default function Interactions() {
+export default function Interactions({ sidebarOpen, onToggleSidebar }) {
   const { state, dispatch, deleteInteraction } = useCRM()
   const { interactions, contacts, searchQuery, loading } = state
   const [filterType, setFilterType] = useState('')
@@ -80,9 +82,14 @@ export default function Interactions() {
       className="p-6 max-w-7xl mx-auto"
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Interactions</h1>
-          <p className="text-gray-600 mt-2">{interactions.length} interactions logged</p>
+        <div className="flex items-center">
+          {!sidebarOpen && (
+            <HamburgerButton onToggle={onToggleSidebar} />
+          )}
+          <div className={sidebarOpen ? "" : "ml-4"}>
+            <h1 className="text-3xl font-bold text-gray-900">Interactions</h1>
+            <p className="text-gray-600 mt-2">{interactions.length} interactions logged</p>
+          </div>
         </div>
         <button
           onClick={() => dispatch({ type: 'OPEN_INTERACTION_MODAL' })}
@@ -137,7 +144,7 @@ export default function Interactions() {
         {filteredAndSortedInteractions.map((interaction, index) => {
           const contact = contacts.find(c => c.id === interaction.contactId)
           const colorClass = interactionTypeColors[interaction.type] || 'gray'
-          
+
           return (
             <motion.div
               key={interaction.id}
@@ -158,7 +165,7 @@ export default function Interactions() {
                       </span>
                       <span className="text-sm text-gray-500 flex items-center">
                         <SafeIcon icon={FiCalendar} className="w-4 h-4 mr-1" />
-                        {new Date(interaction.date).toLocaleDateString()}
+                        {formatDisplayDate(interaction.date)}
                       </span>
                     </div>
                     <h3 className="font-semibold text-gray-900 mb-2">
@@ -172,7 +179,7 @@ export default function Interactions() {
                     {interaction.followUpDate && (
                       <div className="mt-3 flex items-center text-sm text-orange-600">
                         <SafeIcon icon={FiCalendar} className="w-4 h-4 mr-1" />
-                        Follow-up: {new Date(interaction.followUpDate).toLocaleDateString()}
+                        Follow-up: {formatDisplayDate(interaction.followUpDate)}
                       </div>
                     )}
                   </div>
@@ -202,10 +209,7 @@ export default function Interactions() {
           <SafeIcon icon={FiMessageSquare} className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No interactions found</h3>
           <p className="text-gray-600 mb-4">
-            {searchQuery || filterType 
-              ? "Try adjusting your search or filters" 
-              : "Start logging your interactions to track your relationships"
-            }
+            {searchQuery || filterType ? "Try adjusting your search or filters" : "Start logging your interactions to track your relationships"}
           </p>
           {!searchQuery && !filterType && (
             <button

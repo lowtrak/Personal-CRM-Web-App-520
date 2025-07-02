@@ -2,11 +2,13 @@ import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useCRM } from '../context/CRMContext'
 import SafeIcon from '../common/SafeIcon'
+import HamburgerButton from '../components/HamburgerButton'
+import { formatDisplayDate } from '../utils/dateUtils'
 import * as FiIcons from 'react-icons/fi'
 
 const { FiPlus, FiSearch, FiFilter, FiEdit2, FiTrash2, FiMail, FiPhone, FiBuilding, FiUsers } = FiIcons
 
-export default function Contacts() {
+export default function Contacts({ sidebarOpen, onToggleSidebar }) {
   const { state, dispatch, deleteContact } = useCRM()
   const { contacts, searchQuery, filterTag, sortBy, loading } = state
   const [showFilters, setShowFilters] = useState(false)
@@ -69,9 +71,14 @@ export default function Contacts() {
       className="p-6 max-w-7xl mx-auto"
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
-          <p className="text-gray-600 mt-2">{contacts.length} contacts in your network</p>
+        <div className="flex items-center">
+          {!sidebarOpen && (
+            <HamburgerButton onToggle={onToggleSidebar} />
+          )}
+          <div className={sidebarOpen ? "" : "ml-4"}>
+            <h1 className="text-3xl font-bold text-gray-900">Contacts</h1>
+            <p className="text-gray-600 mt-2">{contacts.length} contacts in your network</p>
+          </div>
         </div>
         <button
           onClick={() => dispatch({ type: 'OPEN_CONTACT_MODAL' })}
@@ -216,7 +223,7 @@ export default function Contacts() {
             )}
 
             <div className="text-xs text-gray-500">
-              Added {new Date(contact.createdAt).toLocaleDateString()}
+              Added {formatDisplayDate(contact.createdAt)}
             </div>
           </motion.div>
         ))}
@@ -227,10 +234,7 @@ export default function Contacts() {
           <SafeIcon icon={FiUsers} className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No contacts found</h3>
           <p className="text-gray-600 mb-4">
-            {searchQuery || filterTag 
-              ? "Try adjusting your search or filters" 
-              : "Get started by adding your first contact"
-            }
+            {searchQuery || filterTag ? "Try adjusting your search or filters" : "Get started by adding your first contact"}
           </p>
           {!searchQuery && !filterTag && (
             <button

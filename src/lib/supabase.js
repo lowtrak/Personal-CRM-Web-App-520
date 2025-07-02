@@ -14,4 +14,23 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 })
 
+// Initialize database tables
+export const initializeTables = async () => {
+  try {
+    // Create user_settings table
+    const { error: settingsError } = await supabase.rpc('create_user_settings_table', {})
+    if (settingsError && !settingsError.message.includes('already exists')) {
+      console.error('Error creating user_settings table:', settingsError)
+    }
+
+    // Create activity_log table
+    const { error: activityError } = await supabase.rpc('create_activity_log_table', {})
+    if (activityError && !activityError.message.includes('already exists')) {
+      console.error('Error creating activity_log table:', activityError)
+    }
+  } catch (error) {
+    console.error('Error initializing tables:', error)
+  }
+}
+
 export default supabase

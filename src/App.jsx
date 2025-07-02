@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { HashRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from './hooks/useAuth'
+import { useSidebar } from './hooks/useSidebar'
+import { useActivityLog } from './hooks/useActivityLog'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Contacts from './pages/Contacts'
@@ -12,12 +14,26 @@ import ContactModal from './components/ContactModal'
 import InteractionModal from './components/InteractionModal'
 import AuthModal from './components/AuthModal'
 import { CRMProvider } from './context/CRMContext'
+import { initializeTables } from './lib/supabase'
 import './App.css'
 
 function AppContent() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = React.useState(false)
   const { user, loading } = useAuth()
+  const { isOpen: sidebarOpen, toggle: toggleSidebar } = useSidebar()
+  const { logActivity } = useActivityLog()
+
+  // Initialize database tables when app starts
+  React.useEffect(() => {
+    initializeTables()
+  }, [])
+
+  // Log app initialization
+  React.useEffect(() => {
+    if (user) {
+      logActivity('system', 'app', 'Application initialized and user authenticated')
+    }
+  }, [user, logActivity])
 
   // Show loading spinner while checking auth
   if (loading) {
@@ -49,9 +65,9 @@ function AppContent() {
             </button>
           </div>
         </div>
-        <AuthModal 
-          isOpen={authModalOpen} 
-          onClose={() => setAuthModalOpen(false)} 
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
         />
       </div>
     )
@@ -62,19 +78,16 @@ function AppContent() {
     <CRMProvider>
       <Router>
         <div className="flex h-screen bg-gray-50">
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            onToggle={() => setSidebarOpen(!sidebarOpen)} 
-          />
+          <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
           <main className="flex-1 overflow-hidden">
             <div className="h-full overflow-y-auto">
               <AnimatePresence mode="wait">
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/contacts" element={<Contacts />} />
-                  <Route path="/interactions" element={<Interactions />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/" element={<Dashboard sidebarOpen={sidebarOpen} onToggleSidebar={toggleSidebar} />} />
+                  <Route path="/contacts" element={<Contacts sidebarOpen={sidebarOpen} onToggleSidebar={toggleSidebar} />} />
+                  <Route path="/interactions" element={<Interactions sidebarOpen={sidebarOpen} onToggleSidebar={toggleSidebar} />} />
+                  <Route path="/analytics" element={<Analytics sidebarOpen={sidebarOpen} onToggleSidebar={toggleSidebar} />} />
+                  <Route path="/settings" element={<Settings sidebarOpen={sidebarOpen} onToggleSidebar={toggleSidebar} />} />
                 </Routes>
               </AnimatePresence>
             </div>
