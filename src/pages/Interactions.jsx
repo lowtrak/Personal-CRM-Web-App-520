@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { useCRM } from '../context/CRMContext';
-import SafeIcon from '../common/SafeIcon';
-import * as FiIcons from 'react-icons/fi';
+import React, { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { useCRM } from '../context/CRMContext'
+import SafeIcon from '../common/SafeIcon'
+import * as FiIcons from 'react-icons/fi'
 
-const { FiPlus, FiSearch, FiFilter, FiEdit2, FiTrash2, FiCalendar, FiMessageSquare, FiUsers } = FiIcons;
+const { FiPlus, FiSearch, FiFilter, FiEdit2, FiTrash2, FiCalendar, FiMessageSquare, FiUsers } = FiIcons
 
 const interactionTypeColors = {
   'Email': 'blue',
@@ -13,54 +13,64 @@ const interactionTypeColors = {
   'Event': 'orange',
   'Follow-up': 'red',
   'Other': 'gray'
-};
+}
 
 export default function Interactions() {
-  const { state, dispatch } = useCRM();
-  const { interactions, contacts, searchQuery } = state;
-  const [filterType, setFilterType] = useState('');
-  const [sortBy, setSortBy] = useState('date');
+  const { state, dispatch, deleteInteraction } = useCRM()
+  const { interactions, contacts, searchQuery, loading } = state
+  const [filterType, setFilterType] = useState('')
+  const [sortBy, setSortBy] = useState('date')
 
   const filteredAndSortedInteractions = useMemo(() => {
     let filtered = interactions.filter(interaction => {
-      const contact = contacts.find(c => c.id === interaction.contactId);
-      const contactName = contact ? `${contact.firstName} ${contact.lastName}` : '';
+      const contact = contacts.find(c => c.id === interaction.contactId)
+      const contactName = contact ? `${contact.firstName} ${contact.lastName}` : ''
       
       const searchMatch = searchQuery === '' || 
         `${contactName} ${interaction.type} ${interaction.notes}`
           .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+          .includes(searchQuery.toLowerCase())
       
-      const typeMatch = filterType === '' || interaction.type === filterType;
+      const typeMatch = filterType === '' || interaction.type === filterType
       
-      return searchMatch && typeMatch;
-    });
+      return searchMatch && typeMatch
+    })
 
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date':
-          return new Date(b.date) - new Date(a.date);
+          return new Date(b.date) - new Date(a.date)
         case 'type':
-          return a.type.localeCompare(b.type);
+          return a.type.localeCompare(b.type)
         case 'contact':
-          const contactA = contacts.find(c => c.id === a.contactId);
-          const contactB = contacts.find(c => c.id === b.contactId);
-          const nameA = contactA ? `${contactA.firstName} ${contactA.lastName}` : '';
-          const nameB = contactB ? `${contactB.firstName} ${contactB.lastName}` : '';
-          return nameA.localeCompare(nameB);
+          const contactA = contacts.find(c => c.id === a.contactId)
+          const contactB = contacts.find(c => c.id === b.contactId)
+          const nameA = contactA ? `${contactA.firstName} ${contactA.lastName}` : ''
+          const nameB = contactB ? `${contactB.firstName} ${contactB.lastName}` : ''
+          return nameA.localeCompare(nameB)
         default:
-          return 0;
+          return 0
       }
-    });
-  }, [interactions, contacts, searchQuery, filterType, sortBy]);
+    })
+  }, [interactions, contacts, searchQuery, filterType, sortBy])
 
-  const interactionTypes = Object.keys(interactionTypeColors);
+  const interactionTypes = Object.keys(interactionTypeColors)
 
-  const handleDeleteInteraction = (interactionId) => {
+  const handleDeleteInteraction = async (interactionId) => {
     if (window.confirm('Are you sure you want to delete this interaction?')) {
-      dispatch({ type: 'DELETE_INTERACTION', payload: interactionId });
+      await deleteInteraction(interactionId)
     }
-  };
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <motion.div
@@ -125,8 +135,8 @@ export default function Interactions() {
       {/* Interactions List */}
       <div className="space-y-4">
         {filteredAndSortedInteractions.map((interaction, index) => {
-          const contact = contacts.find(c => c.id === interaction.contactId);
-          const colorClass = interactionTypeColors[interaction.type] || 'gray';
+          const contact = contacts.find(c => c.id === interaction.contactId)
+          const colorClass = interactionTypeColors[interaction.type] || 'gray'
           
           return (
             <motion.div
@@ -141,7 +151,6 @@ export default function Interactions() {
                   <div className={`p-3 rounded-lg bg-${colorClass}-50`}>
                     <SafeIcon icon={FiMessageSquare} className={`w-5 h-5 text-${colorClass}-600`} />
                   </div>
-                  
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-2">
                       <span className={`px-2 py-1 bg-${colorClass}-100 text-${colorClass}-800 text-xs rounded-full font-medium`}>
@@ -152,17 +161,14 @@ export default function Interactions() {
                         {new Date(interaction.date).toLocaleDateString()}
                       </span>
                     </div>
-                    
                     <h3 className="font-semibold text-gray-900 mb-2">
                       {contact ? `${contact.firstName} ${contact.lastName}` : 'Unknown Contact'}
                     </h3>
-                    
                     {interaction.notes && (
                       <p className="text-gray-600 text-sm leading-relaxed">
                         {interaction.notes}
                       </p>
                     )}
-                    
                     {interaction.followUpDate && (
                       <div className="mt-3 flex items-center text-sm text-orange-600">
                         <SafeIcon icon={FiCalendar} className="w-4 h-4 mr-1" />
@@ -171,7 +177,6 @@ export default function Interactions() {
                     )}
                   </div>
                 </div>
-                
                 <div className="flex space-x-1 ml-4">
                   <button
                     onClick={() => dispatch({ type: 'OPEN_INTERACTION_MODAL', payload: interaction })}
@@ -188,11 +193,11 @@ export default function Interactions() {
                 </div>
               </div>
             </motion.div>
-          );
+          )
         })}
       </div>
 
-      {filteredAndSortedInteractions.length === 0 && (
+      {filteredAndSortedInteractions.length === 0 && !loading && (
         <div className="text-center py-12">
           <SafeIcon icon={FiMessageSquare} className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No interactions found</h3>
@@ -213,5 +218,5 @@ export default function Interactions() {
         </div>
       )}
     </motion.div>
-  );
+  )
 }

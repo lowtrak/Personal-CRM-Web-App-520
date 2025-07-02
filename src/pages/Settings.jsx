@@ -42,15 +42,12 @@ export default function Settings() {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        
         if (data.contacts && Array.isArray(data.contacts)) {
           dispatch({ type: 'SET_CONTACTS', payload: data.contacts });
         }
-        
         if (data.interactions && Array.isArray(data.interactions)) {
           dispatch({ type: 'SET_INTERACTIONS', payload: data.interactions });
         }
-        
         alert('Data imported successfully!');
       } catch (error) {
         alert('Error importing data. Please check the file format.');
@@ -87,7 +84,6 @@ export default function Settings() {
           className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
         >
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Data Management</h2>
-          
           <div className="space-y-4">
             {/* Export Data */}
             <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -158,7 +154,6 @@ export default function Settings() {
           className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
         >
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Data Overview</h2>
-          
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <p className="text-2xl font-bold text-blue-600">{contacts.length}</p>
@@ -180,9 +175,9 @@ export default function Settings() {
         >
           <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
           <div className="space-y-2 text-sm text-gray-600">
-            <p><strong>Personal CRM</strong> - Version 1.0</p>
+            <p><strong>Solo CRM</strong> - Version 1.0</p>
             <p>A simple yet powerful tool to manage your personal and professional relationships.</p>
-            <p>All data is stored locally in your browser.</p>
+            <p>All data is stored securely in your Supabase database.</p>
           </div>
         </motion.div>
       </div>
@@ -199,11 +194,9 @@ export default function Settings() {
               <SafeIcon icon={FiAlertTriangle} className="w-6 h-6 text-red-600 mr-3" />
               <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
             </div>
-            
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete all your data? This action cannot be undone.
             </p>
-            
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}

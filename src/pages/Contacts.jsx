@@ -1,55 +1,65 @@
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { useCRM } from '../context/CRMContext';
-import SafeIcon from '../common/SafeIcon';
-import * as FiIcons from 'react-icons/fi';
+import React, { useState, useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { useCRM } from '../context/CRMContext'
+import SafeIcon from '../common/SafeIcon'
+import * as FiIcons from 'react-icons/fi'
 
-const { FiPlus, FiSearch, FiFilter, FiEdit2, FiTrash2, FiMail, FiPhone, FiBuilding, FiUsers } = FiIcons;
+const { FiPlus, FiSearch, FiFilter, FiEdit2, FiTrash2, FiMail, FiPhone, FiBuilding, FiUsers } = FiIcons
 
 export default function Contacts() {
-  const { state, dispatch } = useCRM();
-  const { contacts, searchQuery, filterTag, sortBy } = state;
-  const [showFilters, setShowFilters] = useState(false);
+  const { state, dispatch, deleteContact } = useCRM()
+  const { contacts, searchQuery, filterTag, sortBy, loading } = state
+  const [showFilters, setShowFilters] = useState(false)
 
   const filteredAndSortedContacts = useMemo(() => {
     let filtered = contacts.filter(contact => {
       const searchMatch = searchQuery === '' || 
         `${contact.firstName} ${contact.lastName} ${contact.email} ${contact.company}`
           .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+          .includes(searchQuery.toLowerCase())
       
-      const tagMatch = filterTag === '' || contact.tags?.includes(filterTag);
+      const tagMatch = filterTag === '' || contact.tags?.includes(filterTag)
       
-      return searchMatch && tagMatch;
-    });
+      return searchMatch && tagMatch
+    })
 
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
-          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
         case 'company':
-          return (a.company || '').localeCompare(b.company || '');
+          return (a.company || '').localeCompare(b.company || '')
         case 'date':
-          return new Date(b.createdAt) - new Date(a.createdAt);
+          return new Date(b.createdAt) - new Date(a.createdAt)
         default:
-          return 0;
+          return 0
       }
-    });
-  }, [contacts, searchQuery, filterTag, sortBy]);
+    })
+  }, [contacts, searchQuery, filterTag, sortBy])
 
   const allTags = useMemo(() => {
-    const tags = new Set();
+    const tags = new Set()
     contacts.forEach(contact => {
-      contact.tags?.forEach(tag => tags.add(tag));
-    });
-    return Array.from(tags);
-  }, [contacts]);
+      contact.tags?.forEach(tag => tags.add(tag))
+    })
+    return Array.from(tags)
+  }, [contacts])
 
-  const handleDeleteContact = (contactId) => {
+  const handleDeleteContact = async (contactId) => {
     if (window.confirm('Are you sure you want to delete this contact?')) {
-      dispatch({ type: 'DELETE_CONTACT', payload: contactId });
+      await deleteContact(contactId)
     }
-  };
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <motion.div
@@ -212,7 +222,7 @@ export default function Contacts() {
         ))}
       </div>
 
-      {filteredAndSortedContacts.length === 0 && (
+      {filteredAndSortedContacts.length === 0 && !loading && (
         <div className="text-center py-12">
           <SafeIcon icon={FiUsers} className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No contacts found</h3>
@@ -233,5 +243,5 @@ export default function Contacts() {
         </div>
       )}
     </motion.div>
-  );
+  )
 }

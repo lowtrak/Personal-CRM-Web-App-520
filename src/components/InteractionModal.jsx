@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useCRM } from '../context/CRMContext';
-import SafeIcon from '../common/SafeIcon';
-import * as FiIcons from 'react-icons/fi';
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useCRM } from '../context/CRMContext'
+import SafeIcon from '../common/SafeIcon'
+import * as FiIcons from 'react-icons/fi'
 
-const { FiX, FiUser, FiCalendar, FiMessageSquare } = FiIcons;
+const { FiX, FiUser, FiCalendar, FiMessageSquare } = FiIcons
 
-const interactionTypes = ['Email', 'Phone', 'Meeting', 'Event', 'Follow-up', 'Other'];
+const interactionTypes = ['Email', 'Phone', 'Meeting', 'Event', 'Follow-up', 'Other']
 
 export default function InteractionModal() {
-  const { state, dispatch } = useCRM();
-  const { isInteractionModalOpen, selectedInteraction, contacts } = state;
-  
+  const { state, dispatch, addInteraction, updateInteraction } = useCRM()
+  const { isInteractionModalOpen, selectedInteraction, contacts } = state
   const [formData, setFormData] = useState({
     contactId: '',
     type: 'Email',
     date: new Date().toISOString().split('T')[0],
     notes: '',
     followUpDate: ''
-  });
+  })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (selectedInteraction) {
@@ -28,7 +28,7 @@ export default function InteractionModal() {
         date: selectedInteraction.date ? selectedInteraction.date.split('T')[0] : new Date().toISOString().split('T')[0],
         notes: selectedInteraction.notes || '',
         followUpDate: selectedInteraction.followUpDate || ''
-      });
+      })
     } else {
       setFormData({
         contactId: '',
@@ -36,35 +36,38 @@ export default function InteractionModal() {
         date: new Date().toISOString().split('T')[0],
         notes: '',
         followUpDate: ''
-      });
+      })
     }
-  }, [selectedInteraction, isInteractionModalOpen]);
+  }, [selectedInteraction, isInteractionModalOpen])
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
     const interactionData = {
       ...formData,
       date: new Date(formData.date).toISOString()
-    };
-
-    if (selectedInteraction) {
-      dispatch({
-        type: 'UPDATE_INTERACTION',
-        payload: { ...selectedInteraction, ...interactionData }
-      });
-    } else {
-      dispatch({ type: 'ADD_INTERACTION', payload: interactionData });
     }
-    
-    dispatch({ type: 'CLOSE_INTERACTION_MODAL' });
-  };
+
+    try {
+      if (selectedInteraction) {
+        await updateInteraction({ ...selectedInteraction, ...interactionData })
+      } else {
+        await addInteraction(interactionData)
+      }
+      dispatch({ type: 'CLOSE_INTERACTION_MODAL' })
+    } catch (error) {
+      console.error('Error saving interaction:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleClose = () => {
-    dispatch({ type: 'CLOSE_INTERACTION_MODAL' });
-  };
+    dispatch({ type: 'CLOSE_INTERACTION_MODAL' })
+  }
 
-  if (!isInteractionModalOpen) return null;
+  if (!isInteractionModalOpen) return null
 
   return (
     <AnimatePresence>
@@ -102,7 +105,7 @@ export default function InteractionModal() {
                 <option value="">Select a contact</option>
                 {contacts.map(contact => (
                   <option key={contact.id} value={contact.id}>
-                    {contact.firstName} {contact.lastName} 
+                    {contact.firstName} {contact.lastName}
                     {contact.company && ` (${contact.company})`}
                   </option>
                 ))}
@@ -126,7 +129,6 @@ export default function InteractionModal() {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <SafeIcon icon={FiCalendar} className="w-4 h-4 inline mr-1" />
@@ -173,20 +175,26 @@ export default function InteractionModal() {
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={loading}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center justify-center"
               >
-                {selectedInteraction ? 'Update Interaction' : 'Log Interaction'}
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  selectedInteraction ? 'Update Interaction' : 'Log Interaction'
+                )}
               </button>
             </div>
           </form>
         </motion.div>
       </div>
     </AnimatePresence>
-  );
+  )
 }

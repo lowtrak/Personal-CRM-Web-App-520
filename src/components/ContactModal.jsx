@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useCRM } from '../context/CRMContext';
-import SafeIcon from '../common/SafeIcon';
-import * as FiIcons from 'react-icons/fi';
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useCRM } from '../context/CRMContext'
+import SafeIcon from '../common/SafeIcon'
+import * as FiIcons from 'react-icons/fi'
 
-const { FiX, FiUser, FiMail, FiPhone, FiBuilding, FiTag, FiCalendar } = FiIcons;
+const { FiX, FiUser, FiMail, FiPhone, FiBuilding, FiTag, FiCalendar } = FiIcons
 
 export default function ContactModal() {
-  const { state, dispatch } = useCRM();
-  const { isContactModalOpen, selectedContact } = state;
-  
+  const { state, dispatch, addContact, updateContact } = useCRM()
+  const { isContactModalOpen, selectedContact } = state
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -20,7 +19,8 @@ export default function ContactModal() {
     notes: '',
     tags: '',
     followUpDate: ''
-  });
+  })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (selectedContact) {
@@ -34,7 +34,7 @@ export default function ContactModal() {
         notes: selectedContact.notes || '',
         tags: selectedContact.tags ? selectedContact.tags.join(', ') : '',
         followUpDate: selectedContact.followUpDate || ''
-      });
+      })
     } else {
       setFormData({
         firstName: '',
@@ -46,35 +46,38 @@ export default function ContactModal() {
         notes: '',
         tags: '',
         followUpDate: ''
-      });
+      })
     }
-  }, [selectedContact, isContactModalOpen]);
+  }, [selectedContact, isContactModalOpen])
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
     const contactData = {
       ...formData,
       tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-    };
-
-    if (selectedContact) {
-      dispatch({
-        type: 'UPDATE_CONTACT',
-        payload: { ...selectedContact, ...contactData }
-      });
-    } else {
-      dispatch({ type: 'ADD_CONTACT', payload: contactData });
     }
-    
-    dispatch({ type: 'CLOSE_CONTACT_MODAL' });
-  };
+
+    try {
+      if (selectedContact) {
+        await updateContact({ ...selectedContact, ...contactData })
+      } else {
+        await addContact(contactData)
+      }
+      dispatch({ type: 'CLOSE_CONTACT_MODAL' })
+    } catch (error) {
+      console.error('Error saving contact:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleClose = () => {
-    dispatch({ type: 'CLOSE_CONTACT_MODAL' });
-  };
+    dispatch({ type: 'CLOSE_CONTACT_MODAL' })
+  }
 
-  if (!isContactModalOpen) return null;
+  if (!isContactModalOpen) return null
 
   return (
     <AnimatePresence>
@@ -112,7 +115,6 @@ export default function ContactModal() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <SafeIcon icon={FiUser} className="w-4 h-4 inline mr-1" />
@@ -141,7 +143,6 @@ export default function ContactModal() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <SafeIcon icon={FiPhone} className="w-4 h-4 inline mr-1" />
@@ -169,7 +170,6 @@ export default function ContactModal() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Position
@@ -227,20 +227,26 @@ export default function ContactModal() {
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={loading}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center justify-center"
               >
-                {selectedContact ? 'Update Contact' : 'Add Contact'}
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  selectedContact ? 'Update Contact' : 'Add Contact'
+                )}
               </button>
             </div>
           </form>
         </motion.div>
       </div>
     </AnimatePresence>
-  );
+  )
 }
